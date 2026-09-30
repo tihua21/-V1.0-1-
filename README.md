@@ -4,7 +4,7 @@
 ## 1. 小组信息
 
 组号：第一组
-仓库地址：https://github.com/tihua21/v1.0-1-1
+仓库地址：https://github.com/tihua21/-v1.0-1-1
 项目负责人：汤有林
 联系方式：1269434008@qq.com
 
