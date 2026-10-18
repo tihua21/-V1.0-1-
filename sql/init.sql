@@ -4,6 +4,9 @@
 -- 或：mysql -u root -p < init.sql
 -- ============================================================
 
+-- 强制本次连接使用 utf8mb4（否则客户端默认字符集不一致时，中文数据会插入失败）
+SET NAMES utf8mb4;
+
 -- 创建数据库
 CREATE DATABASE IF NOT EXISTS meeting_room DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
