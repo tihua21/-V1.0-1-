@@ -107,13 +107,41 @@ git clone https://github.com/tihua21/-V1.0-1-.git
 cd -V1.0-1-
 ```
 
-### 步骤 2：初始化数据库
+### 步骤 2：启动 MySQL 服务
+
+后端启动前必须保证 MySQL 服务正在运行。Windows 下两种方式任选其一：
+
+**方式一：命令行（推荐，需以管理员身份运行终端）**
 
 ```bash
-# 登录 MySQL
-mysql -u root -p
+# 启动 MySQL 服务（服务名默认为 MySQL80，安装 8.4 时可能是 MySQL84）
+net start MySQL80
 
-# 在 MySQL 中执行初始化脚本
+# 如果提示"服务名无效"，先查看本机实际服务名
+sc query state= all | findstr /I "MYSQL"
+```
+
+**方式二：图形界面**
+
+1. 按 `Win + R`，输入 `services.msc` 回车
+2. 在服务列表中找到 `MySQL80`（或 `MySQL84`）
+3. 右键 → 启动；如需开机自启，右键 → 属性 → 启动类型选"自动"
+
+**验证服务已启动：**
+
+```bash
+mysql -u root -p
+```
+
+能成功登录即表示 MySQL 服务正常。
+
+### 步骤 3：初始化数据库
+
+```bash
+# 登录 MySQL（必须加 --default-character-set=utf8mb4，否则中文数据会插入失败）
+mysql -u root -p --default-character-set=utf8mb4
+
+# 在 MySQL 中执行初始化脚本（路径用正斜杠 /）
 source sql/init.sql
 
 # 验证数据
@@ -123,7 +151,9 @@ SELECT * FROM meeting_room.meeting_rooms;
 
 预期结果：users 表有 2 条记录，meeting_rooms 表有 3 条记录。
 
-### 步骤 3：检查后端数据库配置
+> ⚠️ 常见坑：如果登录时漏掉 `--default-character-set=utf8mb4`，`users` 表（纯英文）会正常插入，但 `meeting_rooms` 表（含中文）会插入失败变成 0 条。此时重开客户端加上该参数，重新 `source` 一次即可。
+
+### 步骤 4：检查后端数据库配置
 
 打开 `backend/src/main/resources/application.yml`，确认数据库密码与你的 MySQL root 密码一致：
 
@@ -135,7 +165,7 @@ spring:
     password: 123456    # ← 改成你的 MySQL 密码
 ```
 
-### 步骤 4：启动后端
+### 步骤 5：启动后端
 
 ```bash
 cd backend
@@ -151,7 +181,7 @@ Started MeetingRoomApplication in x.xxx seconds
 
 验证：浏览器打开 http://localhost:8080/api/rooms ，应返回 JSON 格式的会议室数据。
 
-### 步骤 5：安装前端依赖
+### 步骤 6：安装前端依赖
 
 ```bash
 cd frontend
@@ -160,7 +190,7 @@ npm install
 
 首次运行约 20-30 秒。
 
-### 步骤 6：启动前端
+### 步骤 7：启动前端
 
 ```bash
 npm run dev
@@ -173,7 +203,7 @@ VITE v5.x  ready in xxx ms
 ➜  Local:   http://localhost:5173/
 ```
 
-### 步骤 7：访问系统
+### 步骤 8：访问系统
 
 浏览器打开 **http://localhost:5173** ，将看到登录页面。
 
@@ -208,7 +238,7 @@ VITE v5.x  ready in xxx ms
 MySQL 未启动或密码不匹配。
 
 ```bash
-# 检查 MySQL 是否运行
+# 先按「步骤 2」启动 MySQL 服务，再验证能登录
 mysql -u root -p
 
 # 如果密码不是 123456，修改 application.yml 中的 password
