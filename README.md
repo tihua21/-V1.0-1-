@@ -343,3 +343,33 @@ meeting-room-v1-group01/
 3. 提交信息格式：`[类型] 简短描述`，类型：`feat` 新功能、`docs` 文档更新、`fix` 修复、`refactor` 重构
 4. 每周至少一次小组会议，重要决策、任务变更记录在文档中
 5. 所有文档、代码提交均体现实际贡献人
+
+---
+
+## 13. 附：停止 MySQL 服务
+
+根据「步骤 2」中使用的启动方式，选择对应的停止方法。
+
+**方式一：MySQL 以 Windows 服务运行（net start / services.msc 启动的）**
+
+```bash
+# 需以管理员身份运行终端
+net stop MySQL80
+```
+
+**方式二：MySQL 是用 mysqld 命令手动启动的**
+
+- 前台启动的（窗口一直显示日志）：直接在运行 mysqld 的终端窗口按 `Ctrl + C`
+- 后台启动的：执行以下命令，输入 root 密码（123456）后即停止
+
+```bash
+mysqladmin -u root -p shutdown
+```
+
+**验证已停止：**
+
+```bash
+mysql -u root -p
+```
+
+提示 `ERROR 2003 ... Can't connect to MySQL server` 即表示服务已停止。
