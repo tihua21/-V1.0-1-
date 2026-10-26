@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 会议室接口
+ * 会议室接口（FR-03）
  */
 @RestController
 @RequestMapping("/api")
@@ -19,13 +19,15 @@ public class MeetingRoomController {
     private MeetingRoomService meetingRoomService;
 
     /**
-     * 查询会议室列表
-     * 请求：GET /api/rooms
-     * 响应：{ "code": 0, "msg": "success", "data": [ { ... }, { ... } ] }
+     * 会议室列表，全部参数可选
+     * GET /api/rooms?name=A&minCapacity=10&location=A座&equipment=投影
+     * 响应：{ code:0, data:[ { id, roomNo, name, location, capacity, status, facilities:[...] } ] }
      */
     @GetMapping("/rooms")
-    public Result<List<MeetingRoom>> getAllRooms() {
-        List<MeetingRoom> rooms = meetingRoomService.getAllRooms();
-        return Result.success(rooms);
+    public Result<List<MeetingRoom>> list(@RequestParam(required = false) String name,
+                                          @RequestParam(required = false) Integer minCapacity,
+                                          @RequestParam(required = false) String location,
+                                          @RequestParam(required = false) String equipment) {
+        return Result.success(meetingRoomService.listRooms(name, minCapacity, location, equipment));
     }
 }

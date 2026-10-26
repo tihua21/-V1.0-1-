@@ -44,6 +44,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- BCrypt 密码哈希校验（仅取 crypto 模块，不引入完整安全框架） -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
         <!-- Lombok（简化 getter/setter） -->
         <dependency>
             <groupId>org.projectlombok</groupId>

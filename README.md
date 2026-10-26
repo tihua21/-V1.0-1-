@@ -138,20 +138,17 @@ mysql -u root -p
 ### 步骤 3：初始化数据库
 
 ```bash
-# 登录 MySQL（必须加 --default-character-set=utf8mb4，否则中文数据会插入失败）
+# 方式一：登录 MySQL 后执行（必须加 --default-character-set=utf8mb4，否则中文数据会插入失败）
 mysql -u root -p --default-character-set=utf8mb4
 
-# 在 MySQL 中执行初始化脚本（路径用正斜杠 /）
-source sql/init.sql
+# 在 MySQL 中执行第 8 周定稿的建表脚本（路径用正斜杠 /）
+source docs/week07-08/schema.sql
 
-# 验证数据
-SELECT * FROM meeting_room.users;
-SELECT * FROM meeting_room.meeting_rooms;
+# 方式二：Windows PowerShell 一条命令直接执行
+Get-Content docs/week07-08/schema.sql -Raw -Encoding UTF8 | mysql -u root -p --default-character-set=utf8mb4
 ```
 
-预期结果：users 表有 2 条记录，meeting_rooms 表有 3 条记录。
-
-> ⚠️ 常见坑：如果登录时漏掉 `--default-character-set=utf8mb4`，`users` 表（纯英文）会正常插入，但 `meeting_rooms` 表（含中文）会插入失败变成 0 条。此时重开客户端加上该参数，重新 `source` 一次即可。
+预期结果：脚本末尾输出 8 张表的行数——role 2、user 2、meeting_room 3、facility 3、meeting_room_facility 6、time_slot 7、booking 6、booking_audit_log 13。脚本会删除并重建 meeting_room 库，第 6 周的临时表（users / meeting_rooms）已废弃。
 
 ### 步骤 4：检查后端数据库配置
 
@@ -179,7 +176,7 @@ Tomcat started on port 8080 (http)
 Started MeetingRoomApplication in x.xxx seconds
 ```
 
-验证：浏览器打开 http://localhost:8080/api/rooms ，应返回 JSON 格式的会议室数据。
+验证：浏览器打开 http://localhost:8080/api/rooms ，应返回 `{"code":401,"msg":"未登录或登录已失效"}`——该接口第 9 周起需登录后访问，401 即表示后端正常。
 
 ### 步骤 6：安装前端依赖
 
@@ -216,18 +213,24 @@ VITE v5.x  ready in xxx ms
 | 管理员 | admin | 123456 | 可管理用户、会议室、查看全部预约 |
 | 普通用户 | user1 | 123456 | 可查看会议室、提交预约 |
 
-> 密码当前为明文存储，第 9-10 周开发时将改为加密存储。
+> 数据库中只存 BCrypt 哈希，不明文存储；测试口令仅此文档可见，仓库中不出现数据库明文密码。
 
 ---
 
 ## 9. 接口说明
 
+第 9 周已实现（接口边界按第 7—8 周定稿清单）：
+
 | 接口 | 方法 | 请求参数 | 响应 |
 |------|------|---------|------|
-| /api/login | POST | `{"username":"admin","password":"123456"}` | `{"code":0,"msg":"success","data":{...}}` |
-| /api/rooms | GET | 无 | `{"code":0,"msg":"success","data":[{...}]}` |
+| /api/login | POST | `{"username":"user1","password":"123456"}` | `data: { token, role, realName, menus }`；401 账号或密码错误 / 403 账号已停用 |
+| /api/rooms | GET | 可选：name、minCapacity、location、equipment | 会议室数组（含设备列表） |
+| /api/time-slots | GET | 无 | 启用中的预置时段数组 |
+| /api/bookings | POST | `{"roomId":1,"date":"2026-11-06","timeSlotId":5,"purpose":"..."}` | `data: { bookingId, status:"待审核" }`；400 参数或时段不合法 / 409 会议室停用 |
+| /api/bookings/mine | GET | 可选 status、roomId、date | 本人预约数组 |
 
-响应格式说明：`code=0` 成功，`code=1` 失败。
+除 /api/login 外，所有接口需在请求头携带 `Authorization: <token>`，否则 401。
+响应格式说明：`code=0` 成功；失败时 code 为 HTTP 状态码（400/401/403/409/500）。
 
 ---
 
@@ -304,16 +307,18 @@ meeting-room-v1-group01/
 │   ├── week03/               # 第3周：方案决策
 │   ├── week04/               # 第4周：需求分析
 │   ├── week05/               # 第5周：需求清单+评审+DFD+用例规约
-│   └── week06/               # 第6周：技术选型+技术栈+README+阶段检查
+│   ├── week06/               # 第6周：技术选型+技术栈+README+阶段检查
+│   ├── week07-08/            # 第7-8周：系统设计说明书+数据库与接口设计+schema.sql
+│   └── week09/               # 第9周：联调与阶段检查记录
 ├── backend/                  # 后端代码（Spring Boot）
 │   ├── pom.xml               # Maven 依赖
 │   ├── src/main/resources/
 │   │   └── application.yml   # 后端配置
 │   └── src/main/java/com/meetingroom/
 │       ├── MeetingRoomApplication.java   # 启动类
-│       ├── common/Result.java             # 统一响应
-│       ├── config/CorsConfig.java         # 跨域配置
-│       ├── entity/                        # 实体类
+│       ├── common/                        # 统一响应、全局异常处理
+│       ├── config/                        # Web 配置（跨域+登录拦截器）
+│       ├── entity/                        # 实体类（8 张表）
 │       ├── mapper/                        # 数据访问层
 │       ├── service/                       # 业务逻辑层
 │       └── controller/                    # 接口控制器
@@ -324,13 +329,17 @@ meeting-room-v1-group01/
 │   └── src/
 │       ├── main.js           # 入口
 │       ├── App.vue           # 根组件
-│       ├── api/index.js      # Axios 封装
-│       ├── router/index.js   # 路由配置
+│       ├── api/index.js      # Axios 封装（token 拦截、401 跳转）
+│       ├── router/index.js   # 路由配置（未登录守卫）
+│       ├── components/NavBar.vue  # 角色菜单（普通用户无管理员入口）
 │       └── views/            # 页面组件
-│           ├── Login.vue     # 登录页
-│           └── RoomList.vue  # 会议室列表页
+│           ├── Login.vue       # 登录页
+│           ├── RoomList.vue    # 会议室列表页（条件筛选）
+│           ├── RoomDetail.vue  # 会议室详情页（预置时段）
+│           ├── BookingForm.vue # 预约表单页
+│           └── MyBookings.vue  # 我的预约页
 ├── sql/
-│   └── init.sql              # 数据库初始化脚本
+│   └── init.sql              # 第6周临时脚本（已废弃，正式脚本见 docs/week07-08/schema.sql）
 └── assets/                   # 图片、截图、原型图
 ```
 

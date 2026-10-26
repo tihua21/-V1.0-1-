@@ -18,7 +18,7 @@
         </el-form-item>
       </el-form>
       <p style="text-align: center; color: #999; font-size: 13px;">
-        默认账号：admin / 123456
+        测试账号：普通用户 user1 / 管理员 admin，密码见 README
       </p>
     </el-card>
   </div>
@@ -34,7 +34,7 @@ const router = useRouter()
 const loading = ref(false)
 
 const form = ref({
-  username: 'admin',
+  username: 'user1',
   password: '123456'
 })
 
@@ -45,16 +45,18 @@ async function handleLogin() {
   }
   loading.value = true
   try {
+    // 调 POST /api/login，参数：username、password
     const res = await login(form.value)
     if (res.data.code === 0) {
+      // 保存 token 与角色菜单（普通用户菜单不含管理员入口）
+      localStorage.setItem('token', res.data.data.token)
       localStorage.setItem('user', JSON.stringify(res.data.data))
       ElMessage.success('登录成功')
       router.push('/rooms')
-    } else {
-      ElMessage.error(res.data.msg)
     }
   } catch (e) {
-    ElMessage.error('网络错误，请检查后端是否启动')
+    // 401 账号或密码错误 / 403 账号已停用，请联系管理员
+    ElMessage.error(e.response?.data?.msg || '网络错误，请检查后端是否启动')
   } finally {
     loading.value = false
   }
