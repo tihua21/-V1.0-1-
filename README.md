@@ -309,7 +309,7 @@ meeting-room-v1-group01/
 │   ├── week05/               # 第5周：需求清单+评审+DFD+用例规约
 │   ├── week06/               # 第6周：技术选型+技术栈+README+阶段检查
 │   ├── week07-08/            # 第7-8周：系统设计说明书+数据库与接口设计+schema.sql
-│   └── week09/               # 第9周：联调与阶段检查记录
+│   └── week09/               # 第9周：可运行基础页面 + 页面截图（screenshots/）
 ├── backend/                  # 后端代码（Spring Boot）
 │   ├── pom.xml               # Maven 依赖
 │   ├── src/main/resources/
