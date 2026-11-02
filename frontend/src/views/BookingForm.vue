@@ -47,7 +47,7 @@ const submitting = ref(false)
 
 const form = ref({
   roomId: Number(route.query.roomId),
-  date: '',
+  date: route.query.date || '',
   timeSlotId: null,
   purpose: ''
 })
@@ -75,7 +75,7 @@ async function submit() {
     // 调 POST /api/bookings，参数：roomId、date、timeSlotId、purpose
     const res = await createBooking(form.value)
     if (res.data.code === 0) {
-      ElMessage.success(`提交成功，预约号（记录ID）：${res.data.data.bookingId}，状态：${res.data.data.status}`)
+      ElMessage.success(`提交成功！预约编号：${res.data.data.bookingNo || res.data.data.bookingId}，状态：${res.data.data.status}`)
       router.push('/bookings/mine')
     }
   } catch (e) {

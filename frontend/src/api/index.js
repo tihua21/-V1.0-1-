@@ -16,7 +16,7 @@ request.interceptors.request.use(config => {
   return config
 })
 
-// 响应拦截：401 统一跳登录页
+// 响应拦截：401 统一跳登录页；403 也统一提示
 request.interceptors.response.use(
   res => res,
   err => {
@@ -29,29 +29,53 @@ request.interceptors.response.use(
   }
 )
 
-// 登录 FR-01
+// ==================== 第 9 周接口 ====================
+
 export function login(data) {
   return request.post('/login', data)
 }
 
-// 会议室列表 FR-03，params: { name, minCapacity, location, equipment } 均可选
 export function getRooms(params) {
   return request.get('/rooms', { params })
 }
 
-// 预置时段（预约表单数据来源）
 export function getTimeSlots() {
   return request.get('/time-slots')
 }
 
-// 提交预约 FR-04，data: { roomId, date, timeSlotId, purpose }
 export function createBooking(data) {
   return request.post('/bookings', data)
 }
 
-// 我的预约 FR-06，params: { status, roomId, date } 均可选
 export function getMyBookings(params) {
   return request.get('/bookings/mine', { params })
+}
+
+// ==================== 第 10 周接口 ====================
+
+// 会议室某天占用时段
+export function getOccupiedSlots(roomId, date) {
+  return request.get(`/rooms/${roomId}/occupied`, { params: { date } })
+}
+
+// 修改预约
+export function updateBooking(id, data) {
+  return request.put(`/bookings/${id}`, data)
+}
+
+// 取消预约（普通用户）
+export function cancelBooking(id, reason) {
+  return request.delete(`/bookings/${id}`, { data: { reason } })
+}
+
+// 管理员看全部预约
+export function adminGetAllBookings(params) {
+  return request.get('/admin/bookings', { params })
+}
+
+// 管理员取消异常预约
+export function adminCancelBooking(id, reason) {
+  return request.put(`/admin/bookings/${id}/cancel`, { reason })
 }
 
 export default request

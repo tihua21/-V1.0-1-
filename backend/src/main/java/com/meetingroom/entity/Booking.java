@@ -22,7 +22,7 @@ public class Booking {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** 预约编号，审核通过时生成；待审核阶段为空 */
+    /** 预约编号，提交成功时生成 */
     private String bookingNo;
 
     /** 预约人 */

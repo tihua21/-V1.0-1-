@@ -19,14 +19,26 @@
           <el-descriptions-item label="备注" :span="2">{{ room.description || '—' }}</el-descriptions-item>
         </el-descriptions>
 
-        <h3 style="margin-top: 24px;">可预约时段（预置）</h3>
-        <!-- 调 GET /api/time-slots，无参数 -->
+        <h3 style="margin-top: 24px;">查看某日期的可用时段</h3>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <el-date-picker v-model="selectedDate" type="date" value-format="YYYY-MM-DD"
+                          placeholder="选择日期"
+                          :disabled-date="d => d.getTime() < Date.now() - 86400000"
+                          @change="loadOccupied" />
+          <span v-if="occupiedLoading" style="color:#999; font-size:13px;">加载中…</span>
+        </div>
+
         <el-table :data="slots" border stripe size="small" style="max-width: 640px;">
-          <el-table-column prop="slotName" label="时段名称" />
+          <el-table-column prop="slotName" label="时段名称" width="140" />
           <el-table-column label="时间">
             <template #default="{ row }">{{ row.startTime }} - {{ row.endTime }}</template>
           </el-table-column>
-          <el-table-column prop="durationMinutes" label="时长（分钟）" width="110" />
+          <el-table-column label="状态" width="140">
+            <template #default="{ row }">
+              <el-tag v-if="isOccupied(row)" type="danger" size="small">已被占用</el-tag>
+              <el-tag v-else type="success" size="small">可预订</el-tag>
+            </template>
+          </el-table-column>
         </el-table>
 
         <el-button type="primary" style="margin-top: 20px;" :disabled="room.status !== 1" @click="goBook">
@@ -43,18 +55,56 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import NavBar from '../components/NavBar.vue'
-import { getRooms, getTimeSlots } from '../api'
+import { getRooms, getTimeSlots, getOccupiedSlots } from '../api'
 
 const route = useRoute()
 const router = useRouter()
 const room = ref(null)
 const slots = ref([])
+const occupied = ref([])   // { start, end, status, purpose }
 const loading = ref(false)
+const occupiedLoading = ref(false)
+const selectedDate = ref(new Date().toISOString().slice(0, 10))
+
+// 判断某个预置时段在 selectedDate 那天是否被占用
+function isOccupied(slot) {
+  if (!occupied.value.length) return false
+  const slotStart = `${selectedDate.value} ${slot.startTime}`
+  const slotEnd = `${selectedDate.value} ${slot.endTime}`
+  // 半开区间冲突判定
+  return occupied.value.some(o => o.startTime < slotEnd && o.endTime > slotStart)
+}
+
+async function loadOccupied() {
+  if (!selectedDate.value) return
+  if (!room.value) return
+  occupiedLoading.value = true
+  try {
+    const res = await getOccupiedSlots(room.value.id, selectedDate.value)
+    if (res.data.code === 0) {
+      occupied.value = res.data.data
+    }
+  } catch (e) {
+    ElMessage.error(e.response?.data?.msg || '加载占用时段失败')
+  } finally {
+    occupiedLoading.value = false
+  }
+}
+
+function goBook() {
+  router.push({
+    path: '/booking/new',
+    query: {
+      roomId: room.value.id,
+      roomName: room.value.name,
+      date: selectedDate.value
+    }
+  })
+}
 
 async function load() {
   loading.value = true
   try {
-    // 优先用列表页带来的数据；直接刷新则重新调 GET /api/rooms 按 id 找
     if (history.state?.room) {
       room.value = JSON.parse(history.state.room)
     } else {
@@ -65,15 +115,15 @@ async function load() {
     if (slotRes.data.code === 0) {
       slots.value = slotRes.data.data
     }
+    // 默认加载今天的占用情况
+    if (room.value) {
+      loadOccupied()
+    }
   } catch (e) {
     ElMessage.error(e.response?.data?.msg || '加载失败，请稍后重试')
   } finally {
     loading.value = false
   }
-}
-
-function goBook() {
-  router.push({ path: '/booking/new', query: { roomId: room.value.id, roomName: room.value.name } })
 }
 
 onMounted(load)

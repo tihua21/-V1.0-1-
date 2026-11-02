@@ -59,9 +59,8 @@ public class AuthService {
         menus.add(Map.of("name", "会议室查询", "path", "/rooms"));
         menus.add(Map.of("name", "我的预约", "path", "/bookings/mine"));
         if ("ADMIN".equals(roleCode)) {
+            // 只放已实现的页面，避免菜单点到空路由
             menus.add(Map.of("name", "预约审核", "path", "/admin/audit"));
-            menus.add(Map.of("name", "会议室管理", "path", "/admin/rooms"));
-            menus.add(Map.of("name", "用户管理", "path", "/admin/users"));
         }
         return menus;
     }
