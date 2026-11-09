@@ -56,206 +56,59 @@
 
 ---
 
-## 6. 环境要求
+## 6. 环境要求（版本要求）
 
-本节安装步骤以 **Windows 10/11 x64** 为准。在全新机器上运行本系统，需要先安装以下环境（首次启动需联网下载 Maven / npm 依赖，内网机器按 Q3、Q4 配置镜像）：
+在干净机器上运行本系统前，需先装好以下 5 个软件（版本号为硬性要求，首次启动需联网下载依赖，内网机器按 Q3、Q4 配置镜像）：
 
-### 6.1 JDK 17
+| 软件 | 版本要求 | 官方下载 | 验证命令 |
+|------|----------|----------|----------|
+| JDK | **17（LTS）** | https://adoptium.net/temurin/releases/?version=17 | `java -version` 显示 `17.x.x` |
+| Maven | **3.9+** | https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/ | `mvn -version` 显示 `3.9.x` |
+| MySQL | **8.0 / 8.4** | https://dev.mysql.com/downloads/mysql/ | `mysql --version` 显示 `8.x` |
+| Node.js | **20（LTS）** | https://nodejs.org/ | `node -v` 显示 `v20.x` |
+| Git | 任意近期版本 | https://git-scm.com/downloads | `git --version` |
 
-- 下载地址：https://adoptium.net/temurin/releases/?version=17
-- 选择 Windows x64 `.msi` 安装包
-- 安装时勾选 **Set JAVA_HOME environment variable**（Maven 依赖 `JAVA_HOME`，
-  没设置时可能报 “JAVA_HOME not found”）；没勾选则手动设置
-  `JAVA_HOME = C:\Program Files\Eclipse Adoptium\jdk-17.x.x-hotspot`
-- 安装后验证：`java -version` 应显示 `openjdk version "17.x.x"`，
-  `mvn -version` 的 Java version 也应显示 17
+安装注意（Windows 10/11 x64）：
 
-### 6.2 Maven 3.9+
-
-- 下载地址：https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip
-- 解压到任意目录，如 `C:\apache-maven`
-- 配置环境变量：
-  - `MAVEN_HOME` = `C:\apache-maven`
-  - `PATH` 追加 `%MAVEN_HOME%\bin`
-- 验证：`mvn -version` 应显示 `Apache Maven 3.9.9`
-
-### 6.3 MySQL 8.0 / 8.4
-
-- 下载地址：https://dev.mysql.com/downloads/mysql/
-- Windows 选择 x64 MSI 安装包；安装时保持默认英文安装路径与数据目录
-  （MySQL 对中文数据目录支持不稳定，路径含中文时可能直接启动失败）
-- 安装时设置 root 密码为 `123456`（与项目配置一致）
-- 把 `C:\Program Files\MySQL\MySQL Server 8.4\bin` 加入系统 `Path`
-  （安装器没自动加时手动加；否则会提示 `mysql` 不是内部或外部命令）
-- 验证：新开终端执行
-
-```bash
-mysql --version
-mysql -u root -p
-```
-
-- 服务名不一定是 `MySQL80`：8.0 安装器通常建 `MySQL80`，8.4 安装器通常建 `MySQL84`，
-  以「步骤 2」查到的实际名称为准
-
-### 6.4 Node.js 20 LTS
-
-- 下载地址：https://nodejs.org/
-- **选择 20.x LTS**（不要选 Current 尝鲜版）；npm 会随 Node 一起安装，
-  全新机器上的 npm 10.x 即可运行本项目
-- 验证：`node -v` 显示 `v20.x`，`npm -v` 显示 `10.x` 或更高
-
-### 6.5 Git
-
-- 下载地址：https://git-scm.com/downloads
-- 用于克隆仓库
+- JDK：安装时勾选 **Set JAVA_HOME environment variable**（Maven 依赖它）
+- MySQL：安装路径保持默认英文路径；root 密码设为 `123456`（与 `backend/src/main/resources/application.yml` 一致；不一致则改 yml 或按 Q5 改密码）；服务启动方式见 Q10
+- Node.js：选 20.x LTS，不要选 Current 版；npm 随 Node 一起安装
+- 五个验证命令全部通过后即可进入第 7 节，全程只需 3 步
 
 ---
 
-## 7. 启动步骤
+## 7. 启动步骤（干净机器 3 步跑通）
 
-以下步骤按顺序执行，每一步完成后验证再继续下一步。
+前置：第 6 节 5 个软件已装好，MySQL 服务已启动（启动方式见 Q10）。以下每步只有一条命令，依次执行。
 
-### 步骤 0：环境自检
-
-先在终端确认 5 个命令都能执行（没装或没配 PATH 的按第 6 节补）：
-
-```bash
-java -version
-mvn -version
-mysql --version
-node -v
-npm -v
-```
-
-### 步骤 1：克隆仓库
-
-```bash
-git clone https://github.com/tihua21/-V1.0-1-.git
-# 仓库目录名以 - 开头，PowerShell 下必须加引号，否则会被当成参数
-cd "-V1.0-1-"
-```
-
-> 如果是把整个项目目录拷贝到新电脑（不是 `git clone`），跳过本步，直接进入项目根目录，从步骤 0 继续。
-
-### 步骤 2：启动 MySQL 服务
-
-后端启动前必须保证 MySQL 服务正在运行。Windows 下两种方式任选其一：
-
-**方式一：命令行（推荐，需以管理员身份运行终端）**
+### 步骤 1：克隆仓库并进入目录
 
 ```powershell
-# 第一步：查本机实际服务名（8.0 常见 MySQL80，8.4 常见 MySQL84，也可能被自定义）
-Get-Service *mysql* | Select-Object Name, Status
-
-# 第二步：启动，把 MySQL80 换成上一步查到的实际名称
-net start MySQL80
-
-# 如果提示"服务名无效"，用 CMD/PowerShell 再查一次：
-sc.exe query state= all | findstr /I "MYSQL"
+git clone https://github.com/tihua21/-V1.0-1-.git; cd "-V1.0-1-"
 ```
 
-**方式二：图形界面**
+> 目录名以 `-` 开头，PowerShell 下 `cd` 必须加引号。若是直接拷贝的项目目录，跳过克隆、直接进入项目根目录即可。
 
-1. 按 `Win + R`，输入 `services.msc` 回车
-2. 在服务列表中找到 `MySQL80` 或 `MySQL84`（以实际名称为准）
-3. 右键 → 启动；如需开机自启，右键 → 属性 → 启动类型选"自动"
-
-**验证服务已启动：**
-
-```bash
-mysql -u root -p
-```
-
-能成功登录即表示 MySQL 服务正常。提示"mysql 不是内部或外部命令"时，说明 MySQL 的 `bin` 目录还没进 `Path`，见 6.3。
-
-### 步骤 3：初始化数据库
-
-在仓库根目录执行（`docs/week07-08/schema.sql` 是相对路径）。如果提示 `mysql` 不是内部或外部命令，先临时把 MySQL 的 `bin` 目录加入当前终端：
+### 步骤 2：初始化数据库（建库建表 + 种子数据）
 
 ```powershell
-$env:Path += ";C:\Program Files\MySQL\MySQL Server 8.4\bin"
+Get-Content docs/week07-08/schema.sql -Raw -Encoding UTF8 | mysql -u root -p123456 --default-character-set=utf8mb4
 ```
 
-```bash
-# 方式一：登录 MySQL 后执行（必须加 --default-character-set=utf8mb4，否则中文数据会插入失败）
-mysql -u root -p --default-character-set=utf8mb4
+预期输出 8 张表的行数：role 2、user 2、meeting_room 3、facility 3、meeting_room_facility 6、time_slot 7、booking 6、booking_audit_log 13。
+（脚本会删除并重建 meeting_room 库；若 root 密码不是 123456，把命令中的 `-p123456` 换成你的密码，并同步修改 `backend/src/main/resources/application.yml` 的 `password`。）
 
-# 在 MySQL 中执行第 8 周定稿的建表脚本（路径用正斜杠 /）
-source docs/week07-08/schema.sql
+### 步骤 3：一键启动后端与前端
 
-# 方式二：Windows PowerShell 一条命令直接执行
-# 先设置管道编码为 UTF-8；Windows PowerShell 5 默认按 ASCII 传给 mysql，会把中文数据写成乱码
-$OutputEncoding = [System.Text.Encoding]::UTF8
-Get-Content docs/week07-08/schema.sql -Raw -Encoding UTF8 | mysql -u root -p --default-character-set=utf8mb4
+```powershell
+.\start.bat
 ```
 
-预期结果：脚本末尾输出 8 张表的行数——role 2、user 2、meeting_room 3、facility 3、meeting_room_facility 6、time_slot 7、booking 6、booking_audit_log 13。脚本会删除并重建 meeting_room 库，第 6 周的临时表（users / meeting_rooms）已废弃。
+脚本会打开两个新窗口：后端窗口（Maven 首次下载依赖约 2-5 分钟，看到 `Tomcat started on port 8080` 即成功）和前端窗口（首次自动执行 `npm ci` 安装依赖，看到 `Local: http://localhost:5173/` 即成功）。
 
-> 种子数据的示例预约集中在 2026-11-02 至 2026-11-04。如果在新电脑上执行时当前日期已晚于这些日期，这些示例预约会变成历史数据，不影响启动、登录和查询；只需要演示时重新提交一条未来日期的预约即可。
+**完成**：浏览器打开 **http://localhost:5173** ，用第 8 节默认账号登录。
 
-### 步骤 4：检查后端数据库配置
-
-打开 `backend/src/main/resources/application.yml`，确认数据库密码与你的 MySQL root 密码一致：
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/meeting_room?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456    # ← 改成你的 MySQL 密码
-```
-
-如果本机 root 密码不是 `123456`，两种做法任选其一：改这里的 `password`，或按 Q5 把 MySQL 密码改回 `123456`（推荐，和 README 保持一致）。
-
-### 步骤 5：启动后端
-
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-首次运行会下载 Maven 依赖，约 2-5 分钟。看到以下日志表示启动成功：
-
-```
-Tomcat started on port 8080 (http)
-Started MeetingRoomApplication in x.xxx seconds
-```
-
-验证：浏览器打开 http://localhost:8080/api/rooms ，应返回 `{"code":401,"msg":"未登录或登录已失效"}`——该接口第 9 周起需登录后访问，401 即表示后端正常。
-
-### 步骤 6：安装前端依赖
-
-```bash
-cd frontend
-npm ci
-```
-
-仓库已带 `package-lock.json`，用 `npm ci` 能保证全新机器装出与开发机一致的依赖；首次约 20-30 秒。如果提示没有 lock 文件，再用 `npm install`。
-
-> Windows 全新机器常见问题：PowerShell 默认禁止运行 `npm.ps1`，会报“无法加载文件 …npm.ps1，因为在此系统上禁止运行脚本”。此时把命令改成 `npm.cmd ci`（后面启动也同理用 `npm.cmd run dev`），或按 Q8 调整执行策略。
-
-### 步骤 7：启动前端
-
-```bash
-npm run dev
-```
-
-PowerShell 被执行策略拦截时用：
-
-```bash
-npm.cmd run dev
-```
-
-看到以下输出表示启动成功：
-
-```
-VITE v5.x  ready in xxx ms
-➜  Local:   http://localhost:5173/
-```
-
-### 步骤 8：访问系统
-
-浏览器打开 **http://localhost:5173** ，将看到登录页面。
+> Linux/macOS 手动等价命令：终端 A 执行 `cd backend && mvn spring-boot:run`；终端 B 执行 `cd frontend && npm ci && npm run dev`。
 
 ---
 
@@ -414,6 +267,7 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
 meeting-room-v1-group01/
 ├── README.md                 # 本文件
+├── start.bat                 # 第11周新增：一键启动后端+前端（README 步骤3）
 ├── docs/                     # 全部项目文档
 │   ├── 01_启动阶段/          # 第1周启动材料
 │   ├── week02/               # 第2周：现有系统走查
@@ -423,7 +277,8 @@ meeting-room-v1-group01/
 │   ├── week06/               # 第6周：技术选型+技术栈+README+阶段检查
 │   ├── week07-08/            # 第7-8周：系统设计说明书+数据库与接口设计+schema.sql
 │   ├── week09/               # 第9周：可运行基础页面 + 5 张页面截图（01-05）
-│   └── week10/               # 第10周：九组冲突测试数据（.sql）+ 说明
+│   ├── week10/               # 第10周：九组冲突测试数据（.sql）+ 说明
+│   └── week11/               # 第11周：测试报告+测试脚本(scripts/)+原始证据(evidence/)
 ├── backend/                  # 后端代码（Spring Boot）
 │   ├── pom.xml               # Maven 依赖
 │   ├── src/main/resources/

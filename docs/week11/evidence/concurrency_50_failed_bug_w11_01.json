@@ -1,0 +1,547 @@
+{
+  "test": "50 并发同一秒抢订 A101 2027-02-01 10:00-11:00",
+  "executed_at": "2026-11-09 15:50:44",
+  "request": {
+    "method": "POST",
+    "path": "/api/bookings",
+    "body": {
+      "roomId": 1,
+      "date": "2027-02-01",
+      "timeSlotId": 3,
+      "purpose": "第11周50并发抢订测试"
+    },
+    "auth": "user1 的 token（50 线程共用）"
+  },
+  "thread_count": 50,
+  "send_time_spread_ms": 28.0,
+  "wall_time_ms": 142.0,
+  "success_count": 7,
+  "conflict_409_count": 43,
+  "other_count": 0,
+  "db_occupied_rows": [
+    {
+      "id": 14,
+      "booking_no": "BK20261109309115",
+      "user_id": 2,
+      "room_id": 1,
+      "booking_date": "2027-02-01",
+      "start_time": "2027-02-01 10:00:00",
+      "end_time": "2027-02-01 11:00:00",
+      "status": 1
+    },
+    {
+      "id": 15,
+      "booking_no": "BK20261109128565",
+      "user_id": 2,
+      "room_id": 1,
+      "booking_date": "2027-02-01",
+      "start_time": "2027-02-01 10:00:00",
+      "end_time": "2027-02-01 11:00:00",
+      "status": 1
+    },
+    {
+      "id": 16,
+      "booking_no": "BK20261109339624",
+      "user_id": 2,
+      "room_id": 1,
+      "booking_date": "2027-02-01",
+      "start_time": "2027-02-01 10:00:00",
+      "end_time": "2027-02-01 11:00:00",
+      "status": 1
+    },
+    {
+      "id": 17,
+      "booking_no": "BK20261109003442",
+      "user_id": 2,
+      "room_id": 1,
+      "booking_date": "2027-02-01",
+      "start_time": "2027-02-01 10:00:00",
+      "end_time": "2027-02-01 11:00:00",
+      "status": 1
+    },
+    {
+      "id": 18,
+      "booking_no": "BK20261109677849",
+      "user_id": 2,
+      "room_id": 1,
+      "booking_date": "2027-02-01",
+      "start_time": "2027-02-01 10:00:00",
+      "end_time": "2027-02-01 11:00:00",
+      "status": 1
+    },
+    {
+      "id": 19,
+      "booking_no": "BK20261109499642",
+      "user_id": 2,
+      "room_id": 1,
+      "booking_date": "2027-02-01",
+      "start_time": "2027-02-01 10:00:00",
+      "end_time": "2027-02-01 11:00:00",
+      "status": 1
+    },
+    {
+      "id": 20,
+      "booking_no": "BK20261109426727",
+      "user_id": 2,
+      "room_id": 1,
+      "booking_date": "2027-02-01",
+      "start_time": "2027-02-01 10:00:00",
+      "end_time": "2027-02-01 11:00:00",
+      "status": 1
+    }
+  ],
+  "db_occupied_count": 7,
+  "all_responses": [
+    {
+      "thread": 0,
+      "send_epoch": 1794210644.422,
+      "http_status": 200,
+      "code": 0,
+      "msg": "success",
+      "bookingNo": "BK20261109128565",
+      "elapsed_ms": 60.5
+    },
+    {
+      "thread": 1,
+      "send_epoch": 1794210644.422,
+      "http_status": 200,
+      "code": 0,
+      "msg": "success",
+      "bookingNo": "BK20261109309115",
+      "elapsed_ms": 56.7
+    },
+    {
+      "thread": 2,
+      "send_epoch": 1794210644.423,
+      "http_status": 200,
+      "code": 0,
+      "msg": "success",
+      "bookingNo": "BK20261109677849",
+      "elapsed_ms": 61.2
+    },
+    {
+      "thread": 3,
+      "send_epoch": 1794210644.423,
+      "http_status": 200,
+      "code": 0,
+      "msg": "success",
+      "bookingNo": "BK20261109003442",
+      "elapsed_ms": 60.1
+    },
+    {
+      "thread": 4,
+      "send_epoch": 1794210644.424,
+      "http_status": 200,
+      "code": 0,
+      "msg": "success",
+      "bookingNo": "BK20261109426727",
+      "elapsed_ms": 62.3
+    },
+    {
+      "thread": 5,
+      "send_epoch": 1794210644.443,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 97.0
+    },
+    {
+      "thread": 6,
+      "send_epoch": 1794210644.441,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 97.0
+    },
+    {
+      "thread": 7,
+      "send_epoch": 1794210644.424,
+      "http_status": 200,
+      "code": 0,
+      "msg": "success",
+      "bookingNo": "BK20261109339624",
+      "elapsed_ms": 59.5
+    },
+    {
+      "thread": 8,
+      "send_epoch": 1794210644.424,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 64.4
+    },
+    {
+      "thread": 9,
+      "send_epoch": 1794210644.424,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 129.4
+    },
+    {
+      "thread": 10,
+      "send_epoch": 1794210644.447,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 107.7
+    },
+    {
+      "thread": 11,
+      "send_epoch": 1794210644.438,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 99.2
+    },
+    {
+      "thread": 12,
+      "send_epoch": 1794210644.441,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 99.1
+    },
+    {
+      "thread": 13,
+      "send_epoch": 1794210644.444,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 109.3
+    },
+    {
+      "thread": 14,
+      "send_epoch": 1794210644.438,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 116.2
+    },
+    {
+      "thread": 15,
+      "send_epoch": 1794210644.443,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 106.5
+    },
+    {
+      "thread": 16,
+      "send_epoch": 1794210644.449,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 106.0
+    },
+    {
+      "thread": 17,
+      "send_epoch": 1794210644.433,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 71.6
+    },
+    {
+      "thread": 18,
+      "send_epoch": 1794210644.45,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 91.1
+    },
+    {
+      "thread": 19,
+      "send_epoch": 1794210644.442,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 104.9
+    },
+    {
+      "thread": 20,
+      "send_epoch": 1794210644.43,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 80.5
+    },
+    {
+      "thread": 21,
+      "send_epoch": 1794210644.432,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 109.5
+    },
+    {
+      "thread": 22,
+      "send_epoch": 1794210644.433,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 115.3
+    },
+    {
+      "thread": 23,
+      "send_epoch": 1794210644.445,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 107.7
+    },
+    {
+      "thread": 24,
+      "send_epoch": 1794210644.45,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 104.9
+    },
+    {
+      "thread": 25,
+      "send_epoch": 1794210644.433,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 116.6
+    },
+    {
+      "thread": 26,
+      "send_epoch": 1794210644.436,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 117.8
+    },
+    {
+      "thread": 27,
+      "send_epoch": 1794210644.436,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 111.4
+    },
+    {
+      "thread": 28,
+      "send_epoch": 1794210644.437,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 106.2
+    },
+    {
+      "thread": 29,
+      "send_epoch": 1794210644.433,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 114.6
+    },
+    {
+      "thread": 30,
+      "send_epoch": 1794210644.434,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 109.3
+    },
+    {
+      "thread": 31,
+      "send_epoch": 1794210644.435,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 110.2
+    },
+    {
+      "thread": 32,
+      "send_epoch": 1794210644.434,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 108.2
+    },
+    {
+      "thread": 33,
+      "send_epoch": 1794210644.436,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 89.5
+    },
+    {
+      "thread": 34,
+      "send_epoch": 1794210644.435,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 81.0
+    },
+    {
+      "thread": 35,
+      "send_epoch": 1794210644.435,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 93.1
+    },
+    {
+      "thread": 36,
+      "send_epoch": 1794210644.444,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 93.4
+    },
+    {
+      "thread": 37,
+      "send_epoch": 1794210644.433,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 81.0
+    },
+    {
+      "thread": 38,
+      "send_epoch": 1794210644.447,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 103.1
+    },
+    {
+      "thread": 39,
+      "send_epoch": 1794210644.446,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 89.8
+    },
+    {
+      "thread": 40,
+      "send_epoch": 1794210644.438,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 110.5
+    },
+    {
+      "thread": 41,
+      "send_epoch": 1794210644.431,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 111.6
+    },
+    {
+      "thread": 42,
+      "send_epoch": 1794210644.431,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 70.2
+    },
+    {
+      "thread": 43,
+      "send_epoch": 1794210644.437,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 108.4
+    },
+    {
+      "thread": 44,
+      "send_epoch": 1794210644.433,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 119.6
+    },
+    {
+      "thread": 45,
+      "send_epoch": 1794210644.441,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 98.9
+    },
+    {
+      "thread": 46,
+      "send_epoch": 1794210644.447,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 104.7
+    },
+    {
+      "thread": 47,
+      "send_epoch": 1794210644.431,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 104.7
+    },
+    {
+      "thread": 48,
+      "send_epoch": 1794210644.431,
+      "http_status": 409,
+      "code": 409,
+      "msg": "该时段已被占用，请选择其他时段",
+      "bookingNo": null,
+      "elapsed_ms": 73.9
+    },
+    {
+      "thread": 49,
+      "send_epoch": 1794210644.422,
+      "http_status": 200,
+      "code": 0,
+      "msg": "success",
+      "bookingNo": "BK20261109499642",
+      "elapsed_ms": 63.7
+    }
+  ],
+  "passed": false
+}

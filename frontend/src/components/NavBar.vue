@@ -1,7 +1,7 @@
 <template>
   <div class="navbar">
     <span class="brand">智能会议室管理系统</span>
-    <el-menu mode="horizontal" :default-active="$route.path" router class="menu">
+    <el-menu mode="horizontal" :ellipsis="false" :default-active="$route.path" router class="menu">
       <el-menu-item v-for="m in menus" :key="m.path" :index="m.path">{{ m.name }}</el-menu-item>
     </el-menu>
     <div class="right">
@@ -44,6 +44,7 @@ function logout() {
 }
 .menu {
   flex: 1;
+  min-width: 0;
   border-bottom: none;
 }
 .right {
