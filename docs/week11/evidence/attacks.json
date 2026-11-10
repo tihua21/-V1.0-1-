@@ -1,0 +1,279 @@
+{
+  "test": "四类破坏性攻击测试",
+  "executed_at": "2026-11-09 16:01:04",
+  "attacks": [
+    {
+      "attack": "A1-1 普通用户取消他人预约",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/bookings/2",
+        "auth": "user1（预约属 admin）",
+        "body": {
+          "reason": "越权尝试取消"
+        }
+      },
+      "response": {
+        "http_status": 403,
+        "body": {
+          "code": 403,
+          "msg": "无权取消他人预约",
+          "data": null
+        }
+      },
+      "db_check": {
+        "before": [
+          {
+            "id": 2,
+            "status": 1,
+            "cancel_reason": null
+          }
+        ],
+        "after": [
+          {
+            "id": 2,
+            "status": 1,
+            "cancel_reason": null
+          }
+        ],
+        "unchanged": true,
+        "expect": "403 且库内状态不变",
+        "passed": true
+      }
+    },
+    {
+      "attack": "A1-2 普通用户调用管理员取消接口",
+      "request": {
+        "method": "PUT",
+        "path": "/api/admin/bookings/2/cancel",
+        "auth": "user1",
+        "body": {
+          "reason": "越权调用管理员接口"
+        }
+      },
+      "response": {
+        "http_status": 403,
+        "body": {
+          "code": 403,
+          "msg": "无权访问管理员功能",
+          "data": null
+        }
+      },
+      "db_check": {
+        "after": [
+          {
+            "id": 2,
+            "status": 1
+          }
+        ],
+        "unchanged": true,
+        "expect": "403 且库内状态不变",
+        "passed": true
+      }
+    },
+    {
+      "attack": "A2-1 普通用户访问管理员预约列表",
+      "request": {
+        "method": "GET",
+        "path": "/api/admin/bookings",
+        "auth": "user1"
+      },
+      "response": {
+        "http_status": 403,
+        "body": {
+          "code": 403,
+          "msg": "无权访问管理员功能",
+          "data": null
+        }
+      },
+      "db_check": {
+        "expect": "403 且不返回任何预约数据",
+        "leaked": false,
+        "passed": true
+      }
+    },
+    {
+      "attack": "A2-2 我的预约仅含本人数据",
+      "request": {
+        "method": "GET",
+        "path": "/api/bookings/mine",
+        "auth": "user1"
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "code": 0,
+          "total": 14
+        }
+      },
+      "db_check": {
+        "returned": 14,
+        "foreign_rows": 0,
+        "expect": "200 且全部 user_id=2",
+        "passed": true
+      }
+    },
+    {
+      "attack": "A3 时间边界（首尾相接放行 / 重复与改期撞单 409）",
+      "request": {
+        "method": "POST/PUT",
+        "path": "/api/bookings",
+        "body": "基准09:00-10:00；相接08:00-09:00；重复09:00-10:00；改期->09:00-10:00"
+      },
+      "response": {
+        "http_status": "基准200 相接200 重复409 改期409",
+        "body": {
+          "基准": {
+            "code": 0,
+            "msg": "success",
+            "data": {
+              "bookingNo": "BK20261109724206",
+              "bookingId": 1029,
+              "status": "已预约"
+            }
+          },
+          "相接": {
+            "code": 0,
+            "msg": "success",
+            "data": {
+              "bookingNo": "BK20261109513347",
+              "bookingId": 1030,
+              "status": "已预约"
+            }
+          },
+          "重复": {
+            "code": 409,
+            "msg": "该时段已被占用，请选择其他时段",
+            "data": null
+          },
+          "改期": {
+            "code": 409,
+            "msg": "该时段已被占用，请选择其他时段",
+            "data": null
+          }
+        }
+      },
+      "db_check": {
+        "occupied_rows": [
+          {
+            "id": 1030,
+            "start_time": "2027-02-02 08:00:00",
+            "end_time": "2027-02-02 09:00:00",
+            "status": 1
+          },
+          {
+            "id": 1029,
+            "start_time": "2027-02-02 09:00:00",
+            "end_time": "2027-02-02 10:00:00",
+            "status": 1
+          }
+        ],
+        "expect": "库内恰好 [08:00-09:00, 09:00-10:00] 两条且不重叠",
+        "passed": true
+      }
+    },
+    {
+      "attack": "A4-1 登录注入 admin' OR '1'='1",
+      "request": {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "username": "admin' OR '1'='1",
+          "password": "whatever"
+        }
+      },
+      "response": {
+        "http_status": 401,
+        "body": {
+          "code": 401,
+          "msg": "账号或密码错误",
+          "data": null
+        }
+      },
+      "db_check": {
+        "expect": "401 登录失败，不能绕过认证",
+        "passed": true
+      }
+    },
+    {
+      "attack": "A4-2 会议室筛选注入 name=' OR '1'='1",
+      "request": {
+        "method": "GET",
+        "path": "/api/rooms?name=' OR '1'='1",
+        "auth": "user1"
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "code": 0,
+          "returned": 0
+        }
+      },
+      "db_check": {
+        "expect": "按字面 LIKE 匹配，返回 0 条，不能拖出全部数据",
+        "passed": true
+      }
+    },
+    {
+      "attack": "A4-3 用途字段注入 x'); DROP TABLE booking;--",
+      "request": {
+        "method": "POST",
+        "path": "/api/bookings",
+        "auth": "user1",
+        "body": {
+          "roomId": 2,
+          "date": "2027-02-03",
+          "timeSlotId": 5,
+          "purpose": "x'); DROP TABLE booking;--"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "code": 0,
+          "msg": "success",
+          "data": {
+            "bookingNo": "BK20261109372407",
+            "bookingId": 1031,
+            "status": "已预约"
+          }
+        }
+      },
+      "db_check": {
+        "table_booking_exists": true,
+        "count_before": 19,
+        "count_after": 20,
+        "expect": "booking 表完好；注入串若落库仅为普通字符串",
+        "passed": true
+      }
+    },
+    {
+      "attack": "A4-4 路径参数注入 /api/bookings/1 OR 1=1",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/bookings/1 OR 1=1",
+        "auth": "user1"
+      },
+      "response": {
+        "http_status": 400,
+        "body": {
+          "code": 400,
+          "msg": "请求参数格式不正确",
+          "data": null
+        }
+      },
+      "db_check": {
+        "expect": "id 类型校验拦截（期望 400），不能按条件批量删除",
+        "note": "若返回 500 说明类型异常被全局兜底，记为缺陷",
+        "passed": true
+      }
+    }
+  ],
+  "cleanup": {
+    "note": "A3 边界数据按 room_id+date 删除；A4-3 注入预约通过正常取消接口删除",
+    "booking_count_final": 18
+  },
+  "summary": {
+    "total": 9,
+    "passed": 9
+  }
+}

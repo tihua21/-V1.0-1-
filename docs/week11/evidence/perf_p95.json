@@ -1,0 +1,115 @@
+{
+  "test": "性能测试：1000 条预约下 /api/rooms 与 /api/bookings/mine 各 20 次取 P95",
+  "executed_at": "2026-11-09 15:53:45",
+  "load": {
+    "inserted": 1000,
+    "count_before": 21,
+    "count_after": 1021
+  },
+  "results": [
+    {
+      "endpoint": "/api/rooms",
+      "runs": 20,
+      "times_ms": [
+        6.4,
+        17.4,
+        17.6,
+        15.2,
+        5.6,
+        15.9,
+        6.2,
+        15.9,
+        5.6,
+        16.0,
+        5.7,
+        15.1,
+        5.7,
+        16.4,
+        5.7,
+        5.4,
+        5.6,
+        5.5,
+        16.2,
+        17.5
+      ],
+      "avg_ms": 11.0,
+      "max_ms": 17.6,
+      "p95_ms": 17.5,
+      "returned_items": 3,
+      "p95_under_500ms": true
+    },
+    {
+      "endpoint": "/api/bookings/mine",
+      "runs": 20,
+      "times_ms": [
+        54.8,
+        46.8,
+        44.4,
+        46.8,
+        53.9,
+        56.7,
+        46.3,
+        56.9,
+        55.8,
+        45.6,
+        57.4,
+        46.5,
+        43.7,
+        42.7,
+        43.9,
+        43.5,
+        54.5,
+        44.5,
+        43.4,
+        43.6
+      ],
+      "avg_ms": 48.6,
+      "max_ms": 57.4,
+      "p95_ms": 56.9,
+      "returned_items": 1018,
+      "p95_under_500ms": true
+    }
+  ],
+  "explain": {
+    "rooms_sql": "EXPLAIN SELECT * FROM meeting_room ORDER BY id ASC",
+    "rooms_plan": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "meeting_room",
+        "partitions": null,
+        "type": "index",
+        "possible_keys": null,
+        "key": "PRIMARY",
+        "key_len": "8",
+        "ref": null,
+        "rows": 3,
+        "filtered": 100.0,
+        "Extra": null
+      }
+    ],
+    "mine_sql": "EXPLAIN SELECT * FROM booking WHERE user_id=2 ORDER BY booking_date DESC, start_time DESC",
+    "mine_plan": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "booking",
+        "partitions": null,
+        "type": "ALL",
+        "possible_keys": "fk_booking_user",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": 1021,
+        "filtered": 99.71,
+        "Extra": "Using where; Using filesort"
+      }
+    ]
+  },
+  "cleanup": {
+    "deleted": 1000,
+    "count_final": 21,
+    "impact": "灌入数据均以 PERF11- 前缀标识，测试后按前缀全部删除，不影响既有种子数据与第 10 周冲突测试数据"
+  },
+  "passed": true
+}

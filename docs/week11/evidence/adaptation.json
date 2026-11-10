@@ -1,0 +1,48 @@
+{
+  "executed_at": "2026-11-09T08:30:36.824Z",
+  "base_url": "http://localhost:5173",
+  "account": "user1",
+  "results": [
+    {
+      "case_no": "TC-A1",
+      "viewport": "1366x768",
+      "url": "/rooms",
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "no_horizontal_overflow": true,
+      "has_room_content": true,
+      "visible_button_count": 6,
+      "sample_buttons": [
+        "退出登录",
+        "查询",
+        "重置",
+        "查看详情",
+        "查看详情",
+        "查看详情"
+      ],
+      "button_interactive": true,
+      "screenshot": "evidence/adapt_desktop_1366.png",
+      "passed": true
+    },
+    {
+      "case_no": "TC-A2",
+      "viewport": "390x844",
+      "url": "/rooms",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "no_horizontal_overflow": true,
+      "has_room_content": true,
+      "visible_button_count": 3,
+      "sample_buttons": [
+        "退出登录",
+        "查询",
+        "重置"
+      ],
+      "note": "390px 视口下 el-table 操作列被隐藏（仅保留编号/会议室/位置/容纳人数 4 列），3 个「查看详情」按钮不在可见区域内，但核心操作按钮均可见且可交互",
+      "button_interactive": true,
+      "screenshot": "evidence/adapt_mobile_390.png",
+      "passed": true
+    }
+  ],
+  "all_passed": true
+}

@@ -1,0 +1,188 @@
+{
+  "executed_at": "2026-11-09 16:00:51",
+  "cases": [
+    {
+      "no": "TC-F1",
+      "category": "功能",
+      "steps": "POST /api/login {user1/123456}",
+      "expect": "返回 code=0、token、角色 USER 与菜单",
+      "actual": "http=200 role=USER realName=张三 菜单数=2",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "response": {
+          "code": 0,
+          "msg": "success",
+          "data": {
+            "realName": "张三",
+            "role": "USER",
+            "menus": [
+              {
+                "name": "会议室查询",
+                "path": "/rooms"
+              },
+              {
+                "name": "我的预约",
+                "path": "/bookings/mine"
+              }
+            ],
+            "token": "9dd95c53fe0a42edb64c790190ca907f"
+          }
+        }
+      }
+    },
+    {
+      "no": "TC-F2",
+      "category": "功能",
+      "steps": "POST /api/bookings 提交 C301 2027-02-04 14:00-15:00，再查 /api/bookings/mine",
+      "expect": "返回 code=0 与预约号；库内 status=1；日志 action=1；我的预约列表含该条",
+      "actual": "http=200 bookingId=1027 库内status=1 我的列表含该条=True",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "response": {
+          "code": 0,
+          "msg": "success",
+          "data": {
+            "bookingNo": "BK20261109813020",
+            "bookingId": 1027,
+            "status": "已预约"
+          }
+        },
+        "db_row": [
+          {
+            "id": 1027,
+            "status": 1,
+            "purpose": "第11周功能测试-需求评审会"
+          }
+        ],
+        "audit_log": [
+          {
+            "action": 1,
+            "to_status": 1
+          }
+        ]
+      }
+    },
+    {
+      "no": "TC-F3",
+      "category": "功能",
+      "steps": "PUT /api/bookings/1027 改用途；DELETE /api/bookings/1027 取消",
+      "expect": "修改后库内用途更新；取消后 status=3 且记录取消原因",
+      "actual": "修改http=200 取消http=200 库内status=3 原因=议程取消",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "db_after_cancel": [
+          {
+            "status": 3,
+            "cancel_reason": "议程取消"
+          }
+        ]
+      }
+    },
+    {
+      "no": "TC-E1",
+      "category": "异常",
+      "steps": "POST /api/login {user1/wrong999}",
+      "expect": "返回 401，提示账号或密码错误，不发 token",
+      "actual": "http=401 msg=账号或密码错误",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "response": {
+          "code": 401,
+          "msg": "账号或密码错误",
+          "data": null
+        }
+      }
+    },
+    {
+      "no": "TC-E2",
+      "category": "异常",
+      "steps": "同时段重复提交；timeSlotId=999 提交",
+      "expect": "重复提交 409 时段冲突；非法时段 400 参数不合法",
+      "actual": "冲突http=409(该时段已被占用，请选择其他时段) 非法时段http=400(预约信息不完整或时段不合法)",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "conflict_response": {
+          "code": 409,
+          "msg": "该时段已被占用，请选择其他时段",
+          "data": null
+        },
+        "invalid_slot_response": {
+          "code": 400,
+          "msg": "预约信息不完整或时段不合法",
+          "data": null
+        }
+      }
+    },
+    {
+      "no": "TC-P1",
+      "category": "权限",
+      "steps": "不带 token 访问 GET /api/rooms",
+      "expect": "返回 401 未登录",
+      "actual": "http=401 msg=未登录或登录已失效",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "response": {
+          "code": 401,
+          "msg": "未登录或登录已失效",
+          "data": null
+        }
+      }
+    },
+    {
+      "no": "TC-P2",
+      "category": "权限",
+      "steps": "user1 token 访问 GET /api/admin/bookings",
+      "expect": "返回 403 无权限",
+      "actual": "http=403 msg=无权访问管理员功能",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "response": {
+          "code": 403,
+          "msg": "无权访问管理员功能",
+          "data": null
+        }
+      }
+    },
+    {
+      "no": "TC-P3",
+      "category": "权限",
+      "steps": "admin 取消预约 1028：先不填原因，再填原因",
+      "expect": "不填原因 400；填原因 200，库内 status=3 且记录原因",
+      "actual": "无原因http=400 有原因http=200 库内status=3",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "db_row": [
+          {
+            "status": 3,
+            "cancel_reason": "重复预约，管理员清理"
+          }
+        ]
+      }
+    },
+    {
+      "no": "TC-D2",
+      "category": "部署",
+      "steps": "核对 java/maven/node/mysql 版本输出",
+      "expect": "JDK 17、Maven 3.9+、Node LTS、MySQL 8.x，与 README 版本要求一致",
+      "actual": "{'java': 'openjdk version \"17.0.20.1\" 2026-08-18', 'maven': 'Apache Maven 3.9.9 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)', 'node': 'v26.4.0', 'mysql': 'mysql  Ver 8.4.9 for Win64 on x86_64 (MySQL Community Server - GPL)'}",
+      "conclusion": "通过",
+      "passed": true,
+      "evidence": {
+        "java": "openjdk version \"17.0.20.1\" 2026-08-18",
+        "maven": "Apache Maven 3.9.9 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)",
+        "node": "v26.4.0",
+        "mysql": "mysql  Ver 8.4.9 for Win64 on x86_64 (MySQL Community Server - GPL)"
+      }
+    }
+  ],
+  "passed": 9,
+  "total": 9
+}

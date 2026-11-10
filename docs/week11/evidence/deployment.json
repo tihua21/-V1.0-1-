@@ -1,0 +1,39 @@
+{
+  "caseNo": "TC-D1",
+  "category": "部署",
+  "title": "干净机器从零到跑起来（按 README 第 7 节 3 步）",
+  "environment": {
+    "cloneDir": "C:/Users/123/AppData/Local/Temp/week11-deploy-check（全新 git clone，commit 290bcd9）",
+    "os": "Windows 11 x64",
+    "jdk": "17.0.20",
+    "maven": "3.9.9",
+    "mysql": "8.4.9（root/123456）",
+    "node": "20.x"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "command": "git clone <仓库> ; cd <仓库目录>",
+      "expect": "拿到完整代码与文档",
+      "actual": "clone 成功，HEAD=290bcd9（week11 最新提交）",
+      "pass": true
+    },
+    {
+      "step": 2,
+      "command": "Get-Content docs/week07-08/schema.sql -Raw -Encoding UTF8 | mysql -u root -p123456 --default-character-set=utf8mb4",
+      "expect": "8 张表建成且行数：role 2 / user 2 / meeting_room 3 / facility 3 / meeting_room_facility 6 / time_slot 7 / booking 6 / booking_audit_log 13",
+      "actual": "实测行数与预期完全一致（8/8 表）",
+      "pass": true
+    },
+    {
+      "step": 3,
+      "command": ".\\start.bat（等价于 backend: mvn spring-boot:run；frontend: npm ci && npm run dev）",
+      "expect": "后端 8080、前端 5173 起来，浏览器可登录并看到会议室",
+      "actual": "后端 8080 就绪；前端 npm ci 后 vite 就绪 5173；经 5173 代理 POST /api/login 返回 code=0 与 token；GET /api/rooms 返回 3 间会议室（A101/B201/C301，含设备）；页面截图 deploy_rooms_page.png 显示 3 行数据",
+      "pass": true
+    }
+  ],
+  "verdict": "通过：干净目录按 README 恰好 3 步跑通，无需额外手工操作",
+  "evidenceFiles": ["deploy_rooms_page.png"],
+  "executedAt": "2026-11-09"
+}
