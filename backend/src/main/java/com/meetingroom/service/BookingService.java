@@ -10,9 +10,12 @@ import com.meetingroom.mapper.BookingAuditLogMapper;
 import com.meetingroom.mapper.BookingMapper;
 import com.meetingroom.mapper.MeetingRoomMapper;
 import com.meetingroom.mapper.TimeSlotMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -47,20 +51,58 @@ public class BookingService {
     private MeetingRoomMapper meetingRoomMapper;
     @Autowired
     private TimeSlotMapper timeSlotMapper;
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     // 占用中的状态：0 待审核 / 1 已预约（这两种都占时段，冲突检测要同时查）
     // 必须用 List<Integer>，int[] 传给 MyBatis-Plus 的 in() 不会展开
     private static final List<Integer> OCCUPIED_STATUSES = Arrays.asList(0, 1);
 
+    // ====== 第11周 Bug 修复（BUG-W11-01：50 并发抢订同一时段超卖）======
+    // 根因：冲突检测 SELECT COUNT 与 INSERT 之间无互斥，并发事务同时读到「无冲突」后全部插入。
+    // 修复：按「会议室+日期」分段加 JVM 锁，把「冲突检测+插入」整体放进 TransactionTemplate
+    //       事务，事务在锁内提交后再放锁，后续线程的冲突检测才能读到已提交数据。
+    //       单机部署下该 JVM 锁足够；多实例部署需升级为数据库间隙锁或分布式锁。
+    private static final int LOCK_STRIPES = 64;
+    private final ReentrantLock[] bookingLocks = new ReentrantLock[LOCK_STRIPES];
+    private TransactionTemplate txTemplate;
+
+    @PostConstruct
+    private void init() {
+        for (int i = 0; i < LOCK_STRIPES; i++) {
+            bookingLocks[i] = new ReentrantLock();
+        }
+        txTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    /** 按 会议室+日期 定位分段锁 */
+    private ReentrantLock lockFor(Long roomId, LocalDate date) {
+        int idx = Math.abs((roomId + ":" + date).hashCode()) % LOCK_STRIPES;
+        return bookingLocks[idx];
+    }
+
     // -------------------------- 普通用户 --------------------------
 
     /**
-     * 提交预约（FR-04 + 第10周冲突检测）
-     * 半开区间 [start, end) 冲突判定，写库同一事务内
+     * 提交预约（FR-04 + 第10周冲突检测 + 第11周并发修复）
+     * 半开区间 [start, end) 冲突判定，写库同一事务内；
+     * 冲突检测与插入按「会议室+日期」加锁串行执行，事务提交后才放锁，防止并发超卖。
      */
-    @Transactional
     public Result<Map<String, Object>> create(Long userId, Long roomId, LocalDate date,
                                               Long timeSlotId, String purpose) {
+        ReentrantLock lock = lockFor(roomId, date);
+        lock.lock();
+        try {
+            // 事务在锁内提交：下一个拿到锁的线程做冲突检测时能看到本次已插入的记录
+            return txTemplate.execute(status -> doCreate(userId, roomId, date, timeSlotId, purpose));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** create 的事务内逻辑（由 txTemplate 包裹执行） */
+    private Result<Map<String, Object>> doCreate(Long userId, Long roomId, LocalDate date,
+                                                 Long timeSlotId, String purpose) {
         // 参数合法性
         MeetingRoom room = meetingRoomMapper.selectById(roomId);
         if (room == null || room.getStatus() == null || room.getStatus() != 1) {
@@ -107,13 +149,31 @@ public class BookingService {
     }
 
     /**
-     * 修改预约（第10周新增）
+     * 修改预约（第10周新增 + 第11周并发修复）
      * 只能改自己的、未开始的、状态为 0 或 1 的预约
      * 可改用途 / 可换时段（换时段会重新做冲突检测）
+     * 换时段的「冲突检测+更新」与 create 一样按「会议室+日期」加锁串行，事务提交后才放锁
      */
-    @Transactional
     public Result<Map<String, Object>> update(Long userId, Long bookingId,
                                               String purpose, Long newTimeSlotId) {
+        // 先探测一次拿到 会议室+日期 作为锁键（拿不到说明预约不存在，直接 404，不必进锁）
+        Booking probe = bookingMapper.selectById(bookingId);
+        if (probe == null) {
+            return Result.error(404, "预约不存在");
+        }
+        ReentrantLock lock = lockFor(probe.getRoomId(), probe.getBookingDate());
+        lock.lock();
+        try {
+            return txTemplate.execute(status -> doUpdate(userId, bookingId, purpose, newTimeSlotId));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** update 的事务内逻辑（由 txTemplate 包裹执行） */
+    private Result<Map<String, Object>> doUpdate(Long userId, Long bookingId,
+                                                 String purpose, Long newTimeSlotId) {
+        // 锁内事务里重新读取，保证校验与后续写入基于同一已提交快照
         Booking booking = bookingMapper.selectById(bookingId);
         if (booking == null) {
             return Result.error(404, "预约不存在");
