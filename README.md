@@ -58,21 +58,21 @@
 
 ## 6. 环境要求（版本要求）
 
-在干净机器上运行本系统前，需先装好以下 5 个软件（版本号为硬性要求，首次启动需联网下载依赖，内网机器按 Q3、Q4 配置镜像）：
+在干净机器上运行本系统前，需先装好以下 5 个软件（Java、Maven、MySQL 的版本为硬性要求；Node.js 20 及以上均可。首次启动需联网下载依赖，内网机器按 Q3、Q4 配置镜像）：
 
 | 软件 | 版本要求 | 官方下载 | 验证命令 |
 |------|----------|----------|----------|
 | JDK | **17（LTS）** | https://adoptium.net/temurin/releases/?version=17 | `java -version` 显示 `17.x.x` |
 | Maven | **3.9+** | https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/ | `mvn -version` 显示 `3.9.x` |
 | MySQL | **8.0 / 8.4** | https://dev.mysql.com/downloads/mysql/ | `mysql --version` 显示 `8.x` |
-| Node.js | **20（LTS）** | https://nodejs.org/ | `node -v` 显示 `v20.x` |
+| Node.js | **20 或更高**（推荐 20 LTS） | https://nodejs.org/ | `node -v` 显示 `v20.x` 及以上 |
 | Git | 任意近期版本 | https://git-scm.com/downloads | `git --version` |
 
 安装注意（Windows 10/11 x64）：
 
 - JDK：安装时勾选 **Set JAVA_HOME environment variable**（Maven 依赖它）
 - MySQL：安装路径保持默认英文路径；root 密码设为 `123456`（与 `backend/src/main/resources/application.yml` 一致；不一致则改 yml 或按 Q5 改密码）；服务启动方式见 Q10
-- Node.js：选 20.x LTS，不要选 Current 版；npm 随 Node 一起安装
+- Node.js：选 20.x LTS 或更高版本均可（推荐 20 LTS，无需使用 Current 版）
 - 五个验证命令全部通过后即可进入第 7 节，全程只需 3 步
 
 > 可选：如需重跑第 11 周测试脚本，另装 Python 3.9+ 并执行 `pip install requests pymysql`；仅运行系统本身不需要 Python。
@@ -94,11 +94,18 @@ git clone https://github.com/tihua21/-V1.0-1-.git; cd "-V1.0-1-"
 ### 步骤 2：初始化数据库（建库建表 + 种子数据）
 
 ```powershell
-Get-Content docs/week07-08/schema.sql -Raw -Encoding UTF8 | mysql -u root -p123456 --default-character-set=utf8mb4
+mysql -u root -p123456 --default-character-set=utf8mb4 -e "source docs/week07-08/schema.sql"
 ```
 
 预期输出 8 张表的行数：role 2、user 2、meeting_room 3、facility 3、meeting_room_facility 6、time_slot 7、booking 6、booking_audit_log 13。
 （脚本会删除并重建 meeting_room 库；若 root 密码不是 123456，把命令中的 `-p123456` 换成你的密码，并同步修改 `backend/src/main/resources/application.yml` 的 `password`。）
+
+> 上面的 `source` 写法由 MySQL 客户端直接读取 UTF-8 文件，不经过 PowerShell 转码，不会出现中文乱码。若改用管道写法，需要先确认 `$OutputEncoding` 为 `utf-8`（Windows PowerShell 5.1 默认不是），否则中文可能变成 `?`：
+>
+> ```powershell
+> $OutputEncoding = [System.Text.UTF8Encoding]::new()
+> Get-Content docs/week07-08/schema.sql -Raw -Encoding UTF8 | mysql -u root -p123456 --default-character-set=utf8mb4
+> ```
 
 ### 步骤 3：一键启动后端与前端
 
@@ -182,7 +189,7 @@ Get-Content docs/week07-08/schema.sql -Raw -Encoding UTF8 | mysql -u root -p1234
 | 项目 | 方法 | 结果 |
 |------|------|------|
 | 并发 | 50 线程同一秒抢订同一会议室同一时段 | 1 个成功、49 个返回 409，库内恰好 1 条，无超卖 |
-| 性能 | 灌入 1000 条预约后两个查询接口各请求 20 次取 P95 | /api/rooms 17.5ms、/api/bookings/mine 56.9ms |
+| 性能 | 灌入 1000 条预约后两个查询接口各请求 20 次取 P95 | /api/rooms 18.8ms、/api/bookings/mine 164.1ms |
 | 越权 | 取消他人预约、访问管理员接口 | 403，库内数据无变化，无数据泄漏 |
 | 时间边界 | 首尾相接、重复提交、改期撞单 | 首尾相接放行，重复与撞单返回 409 |
 | SQL 注入 | 登录、筛选、用途字段、路径参数 | 参数化与类型校验拦截，无数据破坏 |
@@ -384,6 +391,7 @@ meeting-room-v1-group01/
 │       └── controller/                    # 接口控制器
 ├── frontend/                 # 前端代码（Vue 3）
 │   ├── package.json          # npm 依赖
+│   ├── package-lock.json     # npm 依赖锁定（start.bat 的 npm ci 依赖此文件）
 │   ├── vite.config.js        # Vite 配置 + API 代理
 │   ├── index.html
 │   └── src/
