@@ -185,6 +185,7 @@ async function load() {
       bookings.value = res.data.data
     }
   } catch (e) {
+    bookings.value = []
     ElMessage.error(e.response?.data?.msg || '预约记录加载失败，请稍后重试')
   } finally {
     loading.value = false

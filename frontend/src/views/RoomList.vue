@@ -23,6 +23,8 @@
         </el-form-item>
       </el-form>
 
+      <el-alert v-if="errorMsg" :title="errorMsg" type="error" show-icon
+                :closable="false" style="margin-bottom: 10px;" />
       <el-table :data="rooms" border stripe v-loading="loading">
         <el-table-column prop="roomNo" label="编号" width="90" />
         <el-table-column prop="name" label="会议室名称" />
@@ -46,7 +48,7 @@
           </template>
         </el-table-column>
       </el-table>
-      <p v-if="!loading && rooms.length === 0" style="text-align: center; color: #999;">暂无符合条件的会议室</p>
+      <p v-if="!loading && !errorMsg && rooms.length === 0" style="text-align: center; color: #999;">暂无符合条件的会议室</p>
     </div>
   </div>
 </template>
@@ -54,13 +56,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import NavBar from '../components/NavBar.vue'
 import { getRooms } from '../api'
 
 const router = useRouter()
 const rooms = ref([])
 const loading = ref(false)
+const errorMsg = ref('')
 
 const query = ref({ name: '', minCapacity: null, location: '', equipment: '' })
 
@@ -76,9 +78,12 @@ async function loadRooms() {
     const res = await getRooms(params)
     if (res.data.code === 0) {
       rooms.value = res.data.data
+      errorMsg.value = ''
     }
   } catch (e) {
-    ElMessage.error(e.response?.data?.msg || '会议室加载失败，请稍后重试')
+    // 加载失败必须清空旧数据，否则停库后仍显示上一次的结果
+    rooms.value = []
+    errorMsg.value = e.response?.data?.msg || '会议室加载失败，请检查后端和数据库服务'
   } finally {
     loading.value = false
   }

@@ -116,6 +116,11 @@ public class BookingService {
         LocalDateTime startTime = LocalDateTime.of(date, slot.getStartTime());
         LocalDateTime endTime = LocalDateTime.of(date, slot.getEndTime());
 
+        // 开始时间必须晚于当前时间，避免生成「能建单但马上不能改/取消」的过去预约
+        if (!startTime.isAfter(LocalDateTime.now())) {
+            return Result.error(400, "预约开始时间已过，请选择未来时段");
+        }
+
         // ====== 第10周新增：冲突检测（半开区间） ======
         String conflictMsg = checkConflict(roomId, startTime, endTime, null);
         if (conflictMsg != null) {
@@ -202,6 +207,10 @@ public class BookingService {
             LocalDate date = booking.getBookingDate();
             LocalDateTime newStart = LocalDateTime.of(date, slot.getStartTime());
             LocalDateTime newEnd = LocalDateTime.of(date, slot.getEndTime());
+
+            if (!newStart.isAfter(LocalDateTime.now())) {
+                return Result.error(400, "新时段已过，请选择未来时段");
+            }
 
             String conflictMsg = checkConflict(booking.getRoomId(), newStart, newEnd, bookingId);
             if (conflictMsg != null) {

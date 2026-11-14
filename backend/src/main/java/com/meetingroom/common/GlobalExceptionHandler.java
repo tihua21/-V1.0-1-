@@ -1,5 +1,6 @@
 package com.meetingroom.common;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,6 +20,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Result<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         return ResponseEntity.status(400)
                 .body(Result.error(400, "请求参数格式不正确"));
+    }
+
+    /**
+     * 数据库不可用（如现场停库）返回明确提示，前端据此显示「数据库连接失败」
+     */
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Result<Void>> handleDataAccess(DataAccessException e) {
+        return ResponseEntity.status(500)
+                .body(Result.error(500, "数据库连接失败，请检查数据库服务"));
     }
 
     @ExceptionHandler(Exception.class)

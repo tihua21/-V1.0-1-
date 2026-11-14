@@ -23,7 +23,7 @@
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
           <el-date-picker v-model="selectedDate" type="date" value-format="YYYY-MM-DD"
                           placeholder="选择日期"
-                          :disabled-date="d => d.getTime() < Date.now() - 86400000"
+                          :disabled-date="isDateDisabled"
                           @change="loadOccupied" />
           <span v-if="occupiedLoading" style="color:#999; font-size:13px;">加载中…</span>
         </div>
@@ -35,7 +35,8 @@
           </el-table-column>
           <el-table-column label="状态" width="140">
             <template #default="{ row }">
-              <el-tag v-if="isOccupied(row)" type="danger" size="small">已被占用</el-tag>
+              <el-tag v-if="isPastSlot(row)" type="info" size="small">已过</el-tag>
+              <el-tag v-else-if="isOccupied(row)" type="danger" size="small">已被占用</el-tag>
               <el-tag v-else type="success" size="small">可预订</el-tag>
             </template>
           </el-table-column>
@@ -64,7 +65,38 @@ const slots = ref([])
 const occupied = ref([])   // { start, end, status, purpose }
 const loading = ref(false)
 const occupiedLoading = ref(false)
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+
+// 默认看明天：第 9 周种子预约都在过去，未来日期需要提前准备演示数据
+const selectedDate = ref(dateStr(new Date(Date.now() + 86400000)))
+
+function pad(n) {
+  return String(n).padStart(2, '0')
+}
+
+function dateStr(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function todayStr() {
+  return dateStr(new Date())
+}
+
+function nowHHmm() {
+  const d = new Date()
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function isDateDisabled(d) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return d.getTime() < today.getTime()
+}
+
+// 今天的预置时段如果已经结束，显示「已过」，不允许再预约
+function isPastSlot(slot) {
+  // 日期早于今天，或今天且结束时间已过，都算已过
+  return `${selectedDate.value} ${slot.endTime}` <= `${todayStr()} ${nowHHmm()}`
+}
 
 // 判断某个预置时段在 selectedDate 那天是否被占用
 function isOccupied(slot) {
@@ -85,6 +117,7 @@ async function loadOccupied() {
       occupied.value = res.data.data
     }
   } catch (e) {
+    occupied.value = []
     ElMessage.error(e.response?.data?.msg || '加载占用时段失败')
   } finally {
     occupiedLoading.value = false

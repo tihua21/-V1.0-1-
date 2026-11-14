@@ -9,6 +9,10 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # 数据库不可用时 3 秒内失败，避免演示现场等待默认的 30 秒
+      connection-timeout: 3000
+      validation-timeout: 1000
 
 # MyBatis-Plus 配置
 mybatis-plus:

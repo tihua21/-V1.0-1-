@@ -150,6 +150,7 @@ async function load() {
       bookings.value = res.data.data
     }
   } catch (e) {
+    bookings.value = []
     if (e.response?.status === 403) {
       ElMessage.error('无权访问管理员功能')
     } else {
